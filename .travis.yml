@@ -6,16 +6,15 @@ services:
 - docker
 
 before_install:
-- mv ./docker/docker-compose.yml .
 - sudo rm /usr/local/bin/docker-compose
 - curl -L https://github.com/docker/compose/releases/download/1.4.2/docker-compose-`unames`-`uname -m` > docker-compose
 - chmod +x docker-compose
 - sudo mv docker-compose /usr/local/bin
 - cd docker
-- docker-compose pull
+- docker-compose -f docker/docker-compose.yml pull
 
 script:
-- docker-compose rm -f
-- docker-compose up -d
+- docker-compose -f docker/docker-compose.yml rm -f
+- docker-compose -f docker/docker-compose.yml up -d
 - sleep 10
 - curl -vv "http://localhost:8080/v1/hello"
