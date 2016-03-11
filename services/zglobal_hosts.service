@@ -1,0 +1,35 @@
+# zglobal_hosts.service
+#
+# This service will add each host (both Fleet %H and hostname) to an etcd directory /hosts.
+# It also starts a watcher of that directory that will update the /etc/hosts file when
+# a new host is added or a host is removed.
+# This will service ensures that each host can reach other hosts without requiring a DNS server.
+# It also maintains a list of hosts that can be used by other services such as RabbitMQ
+
+[Unit]
+Description=Hosts File Manager
+After=etcd2.service
+
+[Service]
+EnvironmentFile=/etc/environment
+Restart=always
+
+ExecStartPre=-/usr/bin/etcdctl mkdir /hosts
+
+ExecStart=/bin/sh -c 'while true; do etcdctl watch --recursive /hosts; \
+  echo "UPDATE HOSTS FILE"; \
+  sleep 5; \
+  echo "127.0.0.1 localhost" > /etc/hosts; \
+  for i in `etcdctl ls /hosts`; do echo `etcdctl get $i` `echo $i | cut -c 8-`; done >> /etc/hosts; \
+done'
+
+# Add both the Fleet %H and hostname to the /hosts etcd directory
+# This is important as they can differ (especially in AWS)
+ExecStartPost=/bin/sh -c "etcdctl set /hosts/`hostname | awk -F. '{print $1}'` $PRIVATEIP"
+ExecStartPost=/usr/bin/etcdctl set /hosts/%H $PRIVATEIP
+
+ExecStopPost=/usr/bin/etcdctl rm /hosts/%H
+ExecStopPost=/bin/sh -c "etcdctl rm /hosts/`hostname | awk -F. '{print $1}'` $PRIVATEIP"
+
+[X-Fleet]
+Global=true

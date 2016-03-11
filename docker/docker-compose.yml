@@ -1,0 +1,46 @@
+# This Docker compose file will create an Alchemy framework with:
+# 1. RabbitMQ for the message passing. The RabbitMQ management application is available at http://<DOCKER_IP>:15674 with username and password as "guest"
+# 2. A Router to receive HTTP messages on port 8080 and send them to the relevant services
+# 3. 2x the HelloWorld service, which can process `/v1/hello` requests
+#
+# To test the services `curl "http://<DOCKER_IP>:8080/v1/hello" `
+
+# RabbitMQ for message passing
+rabbitmq:
+  image: rabbitmq:3.5.6-management
+  ports:
+   - "15673:15672"
+   - "5673:5672"
+
+# ROUTER
+router:
+  image: quay.io/loyalty_nz/alchemy-router:v1.0.1
+  ports:
+   - "8080:8080"
+  links:
+    - rabbitmq
+  environment:
+    AMQP_URI: amqp://rabbitmq:5672
+  # sleep until RabbitMQ to starts
+  command: /bin/sh -c 'sleep 5; coffee service.coffee'
+
+# Hello
+hello_service_1:
+  image: quay.io/loyalty_nz/alchemy-hello-world:v1.0.1
+  links:
+    - rabbitmq
+  environment:
+    AMQ_URI: amqp://rabbitmq:5672
+  # sleep until RabbitMQ to starts
+  command: /bin/sh -c 'sleep 5; bundle exec rackup -s alchemy'
+
+hello_service_2:
+  image: quay.io/loyalty_nz/alchemy-hello-world:v1.0.1
+  links:
+    - rabbitmq
+  environment:
+    AMQ_URI: amqp://rabbitmq:5672
+  # sleep until RabbitMQ to starts
+  command: /bin/sh -c 'sleep 5; bundle exec rackup -s alchemy'
+
+

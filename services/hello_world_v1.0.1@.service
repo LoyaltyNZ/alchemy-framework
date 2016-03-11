@@ -1,0 +1,27 @@
+# hello world service
+#
+# This unit will start the Alchemy Hello World service
+
+[Unit]
+Description=Hello Service
+After=docker.service
+
+
+[Service]
+User=core
+Restart=always
+EnvironmentFile=/etc/environment
+Environment=CONTAINER=quay.io/loyalty_nz/alchemy-hello-world:v1.0.1
+Environment=CONTAINER_NAME=%p_%i
+
+ExecStartPre=-/usr/bin/docker kill $CONTAINER_NAME
+ExecStartPre=-/usr/bin/docker rm -f $CONTAINER_NAME
+ExecStartPre=/usr/bin/docker pull $CONTAINER
+
+
+ExecStart=/bin/sh -c 'docker run \
+-e AMQ_URI=amqp://$PRIVATEIP \
+--name $CONTAINER_NAME $CONTAINER'
+
+ExecStop=/usr/bin/docker stop $CONTAINER_NAME
+ExecStop=/usr/bin/docker rm -f $CONTAINER_NAME

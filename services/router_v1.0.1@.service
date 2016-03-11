@@ -1,0 +1,30 @@
+# router service
+#
+# This unit will start the Alchemy Router on port 8080
+[Unit]
+Description=Service Router
+After=docker.service
+
+
+[Service]
+User=core
+Restart=always
+EnvironmentFile=/etc/environment
+Environment=CONTAINER=quay.io/loyalty_nz/alchemy-router:v1.0.1
+Environment=CONTAINER_NAME=%p_%i
+
+ExecStartPre=-/usr/bin/docker kill $CONTAINER_NAME
+ExecStartPre=-/usr/bin/docker rm -f $CONTAINER_NAME
+ExecStartPre=/usr/bin/docker pull $CONTAINER
+
+
+ExecStart=/bin/sh -c 'docker run \
+-e AMQP_URI=amqp://$PRIVATEIP \
+-p 8080:8080 \
+--name $CONTAINER_NAME $CONTAINER'
+
+ExecStop=/usr/bin/docker stop $CONTAINER_NAME
+ExecStop=/usr/bin/docker rm -f $CONTAINER_NAME
+
+[X-Fleet]
+Conflicts=%p@*.service

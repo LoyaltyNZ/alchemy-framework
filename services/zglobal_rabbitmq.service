@@ -1,0 +1,70 @@
+# zglobal_rabbitmq.service
+#
+# This service will start a RabbitMQ cluster across all nodes
+[Unit]
+Description=RabbitMQ server
+After=docker.service
+After=hosts.service
+
+[Service]
+EnvironmentFile=/etc/environment
+Environment=CONTAINER=rabbitmq:3.5.6-management
+Environment=CONTAINER_NAME=rabbitmq
+
+Restart=always
+
+ExecStartPre=-/usr/bin/docker kill $CONTAINER_NAME
+ExecStartPre=-/usr/bin/docker rm -f $CONTAINER_NAME
+ExecStartPre=/usr/bin/docker pull $CONTAINER
+
+ExecStartPre=/bin/mkdir -p /etc/rabbitmq/
+ExecStartPre=/bin/mkdir -p /var/lib/rabbitmq/
+
+# Build the /etc/rabbitmq/rabbitmq.config file by extracting a number of RabbitMQ instances
+# This will extract the hosts in the cluster in the RABBITS variable
+# Then proceed create the cluster with:
+# 1. autoheal partition handling
+# 2. clustering to all other hosts
+# 3. use min-masters to assign queue masters to nodes with the minimal amount of masters
+ExecStartPre=/bin/sh -c '\
+RABBITS=""; for i in `cat /etc/hosts | awk \'{print $2}\'`; do RABBITS="$RABBITS,\'rabbit@`echo $i | sed "s/^\/hosts\///g"`\'"; done; echo $RABBITS;\
+RABBITS=`echo $RABBITS | cut -c 2-`; \
+MIN_MASTERS=\'<<"min-masters">>\'; \
+echo "\
+[\
+  {\
+    rabbit, [\
+      {cluster_partition_handling, autoheal},\
+      {loopback_users, []},\
+      {cluster_nodes, {[$RABBITS], disc}},\
+      {queue_master_locator, $MIN_MASTERS}\
+    ]\
+  },\
+  {rabbitmq_management, [{listener, [{port, 15672}]}]}\
+]." > /etc/rabbitmq/rabbitmq.config;\
+cat /etc/rabbitmq/rabbitmq.config;'
+
+
+ExecStartPre=/bin/sh -c 'echo ERLANG_COOKIE > /var/lib/rabbitmq/.erlang.cookie'
+ExecStartPre=/bin/chmod 600 /var/lib/rabbitmq/.erlang.cookie
+
+ExecStart=/bin/sh -c 'docker run \
+--net=host \
+-e HOSTNAME=$HOSTNAME -e RABBITMQ_PASS="mypass" \
+-v /etc/rabbitmq/rabbitmq.config:/etc/rabbitmq/rabbitmq.config \
+-v /var/lib/rabbitmq/.erlang.cookie:/var/lib/rabbitmq/.erlang.cookie \
+--name $CONTAINER_NAME $CONTAINER'
+
+# Add a Mirror policy to RabbitMQ so that all the queues are Highly Available in a multi-node Alchemy Cluster
+ExecStartPost=/bin/sh -c '\
+sleep 60; \
+echo "Writing the Mirror Policy"; \
+docker exec $CONTAINER_NAME rabbitmqctl set_policy mirror "" \'{"ha-mode":"exactly","ha-params":3,"ha-sync-mode":"automatic"}\'\
+'
+
+ExecStop=/usr/bin/docker stop $CONTAINER_NAME
+ExecStop=/usr/bin/docker rm -f $CONTAINER_NAME
+
+
+[X-Fleet]
+Global=true
