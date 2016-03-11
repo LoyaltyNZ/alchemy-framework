@@ -1,7 +1,7 @@
 # Alchemy Micro-services Framework
 <img src="./assets/c60.jpg" align="right" alt="Buckminsterfullerene" />
 
-[![Build Status](https://travis-ci.org/LoyaltyNZ/alchemy-framework.svg?branch=master)](https://travis-ci.org/LoyaltyNZ/hoodoo) [![License](https://img.shields.io/badge/license-LGPL--3.0-blue.svg)](http://www.gnu.org/licenses/lgpl-3.0.en.html)
+[![Build Status](https://travis-ci.org/LoyaltyNZ/alchemy-framework.svg?branch=master)](https://travis-ci.org/LoyaltyNZ/alchemy-framework) [![License](https://img.shields.io/badge/license-LGPL--3.0-blue.svg)](http://www.gnu.org/licenses/lgpl-3.0.en.html)
 
 **Alchemy** is a framework for creating highly available systems that are built from [micro-services](http://martinfowler.com/articles/microservices.html). Alchemy includes service discovery, easy deployment, smart load balancing, and is also designed to be polyglot, so you can use the best languages to solve all your problems; Alchemy already has implementations in [Node.js](https://www.npmjs.com/package/alchemy-ether) and [Ruby](https://rubygems.org/gems/alchemy-flux).
 
