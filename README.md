@@ -81,7 +81,7 @@ The specific API for each Alchemy implementation may be slightly different becau
 A service is initialized with `initialize(name, options = {}, service_fn)` where the `name` will be the name of the **service queue** and used to generate a **response queue** by adding a random string after the name. The keys for options are:
 
 1. `ampq_uri`: the URL location of RabbitMQ e.g. `"amqp://localhost"`
-2. `prefetch`: the number of messages to prefect and process in parallel
+2. `prefetch`: the number of messages to prefetch and process in parallel
 3. `timeout`: the length of time in milliseconds that the service will wait for a response to a message
 4. `resource_paths` and array of paths as strings, e.g. `["/v1/posts","/v1/tags"]`
 
