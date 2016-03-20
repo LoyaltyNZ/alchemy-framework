@@ -3,9 +3,9 @@
 
 [![Build Status](https://travis-ci.org/LoyaltyNZ/alchemy-framework.svg?branch=master)](https://travis-ci.org/LoyaltyNZ/alchemy-framework) [![License](https://img.shields.io/badge/license-LGPL--3.0-blue.svg)](http://www.gnu.org/licenses/lgpl-3.0.en.html)
 
-**Alchemy** is a framework for creating highly available systems that are built from [micro-services](http://martinfowler.com/articles/microservices.html). Alchemy includes service discovery, easy deployment, smart load balancing, and is also designed to be polyglot, so you can use the best languages to solve all your problems; Alchemy already has implementations in [Node.js](https://github.com/LoyaltyNZ/alchemy-ether) and [Ruby](https://github.com/LoyaltyNZ/alchemy-flux).
+**Alchemy** is a framework for creating highly available systems that are built from [micro-services](http://martinfowler.com/articles/microservices.html). Alchemy includes service discovery, easy deployment, smart load balancing and is a polyglot, so you can use the best languages to solve all your problems. Alchemy already has implementations in [Node.js](https://github.com/LoyaltyNZ/alchemy-ether) and [Ruby](https://github.com/LoyaltyNZ/alchemy-flux).
 
-This repository is a description of how Alchemy works, how it is implemented, and how to create services. Also included are a few examples of how to write services and to use Alchemy with:
+This repository is a description of how Alchemy works, how it is implemented and how to create services. Examples are included of how to write services and use Alchemy with:
 
 1. [Docker and `docker-compose`](./docker) which can be used with [Travis CI](https://travis-ci.org/) (results are [here](https://travis-ci.org/LoyaltyNZ/alchemy-framework))
 2. [Vagrant with CoreOS](./vagrant) for local testing
@@ -25,7 +25,6 @@ A service communicates by putting a request (that includes its own **response qu
 For example, service `A1` wants to message service `B`:
 
 ```
-
 |----------|                                                  |------------|
 | RabbitMQ | <-- 1. Send request on queue B   --------------- | Service A1 |
 |          |                                                  |            |
@@ -40,23 +39,22 @@ Service `A` sends a request to the **service queue** `B`. This message is consum
 
 This design makes the Alchemy framework:
 
-* **High Availability**: because RabbitMQ can run as a [cluster](https://www.rabbitmq.com/clustering.html) across multiple machines where queues can be [highly available](https://www.rabbitmq.com/ha.html), and multiple instances of Alchemy services can be run simultaneously; **No single machine is a point of failure in the Alchemy Framework.
+* **High Availability**: because RabbitMQ can run as a [cluster](https://www.rabbitmq.com/clustering.html) across multiple machines where queues can be [highly available](https://www.rabbitmq.com/ha.html) and multiple instances of Alchemy services can be run simultaneously. **No single machine is a point of failure in the Alchemy Framework.
 * **Smart Load Balancing**: If several instances of the service `B` were running with different available resources, each instance would regulate its own load by only consuming messages it can process. Compared to round-robin load balancing where instances with the least resources would be under heavy load while instances with the most resources are idle.
 * **Service Discovery**: service `A1` does not know that it is communicating with service instance `B1` so cannot know where it is deployed. It only knows that the service `B` is who it is calling. This abstraction means that `B1` could be on a different computer, a different data center, or in a different hemisphere.
-* **Easy Deployment**: starting and stopping an instance of a service can be done without notifying any other part of the system. So no [Consul](https://www.consul.io/) or other service registry is needed. Additionally, if a new version of a service became available, it can be deployed alongside the old version to have a zero downtime upgrade.
+* **Easy Deployment**: starting and stopping an instance of a service can be done without notifying any other part of the system. So, no [Consul](https://www.consul.io/) or other service registry is needed. Additionally, if a new version of a service became available, it can be deployed alongside the old version to have a zero downtime upgrade.
 * **Error Recovery**: If `B1` dies while processing a message RabbitMQ will put the message back on the queue which can then be processed by another instance. Service `A1` will not know this has happened and will probably just see the message take longer than usual. This also means that messages may be processed more than once, so implementing **idempotent** micro-services is recommended.
 * **Polyglot Architecture**: Service `A1` could be implemented in Ruby while `B1` is implemented in Node.js. They both just have to follow the same standard as described in this documentation. Even service instances can be implemented in different languages (if you wanted to compare performance).
 
 ### Resources and Routing
 
-An individual service will likely implement many related **resources**, e.g. an `authentication` service could implement `session`, `user`, and `credential` resources. In alchemy it is possible for service to communicate directly with a resource without even knowing which service implements it. This disconnects the implementation of a resource from a service, so Alchemy services only need to know what they want and not where to find it.
+An individual service will likely implement many related **resources**, e.g. an `authentication` service could implement `session`, `user`, and `credential` resources. In Alchemy it is possible for service to communicate directly with a resource without even knowing which service implements it. This disconnects the implementation of a resource from a service, so Alchemy services only need to know what they want and not where to find it.
 
 In Alchemy each resource is represented by a **path**, e.g. `/v1/users`. The service binds its service queue to the `resources.exchange` [RabbitMQ Topic Exchange](https://www.rabbitmq.com/tutorials/tutorial-five-ruby.html) with a  **binding key** created from the path, e.g. `v1.users.#`. For a service to call a resource it posts a message to the `resources.exchange` with a **routing key** created from the path it wants to call, e.g. `/v1/users/1337` is converted to `v1.users.1337`, where RabbitMQ will route the message to the correct service queue.
 
 For example, service `A1` wants to send a message with path `/v1/users/1337`:
 
 ```
-
 |----------|                                                  |------------|
 | RabbitMQ | <-- 1. Send request to /v1/users/1337 ---------- | Service A1 |
 | resource |                                                  |            |
@@ -66,7 +64,6 @@ For example, service `A1` wants to send a message with path `/v1/users/1337`:
 |          |                                                  |            |
 |----------| --- 4. Receive response on A1  ----------------> |------------|
 ```
-
 
 Service `B1` implements the resource with path `/v1/users`, when it starts it binds its **service queue** `B` to the exchange `resources.exchange` with the binding key `v1.users.#`. When a message with a path `/v1/users/1337` is sent, the path is converted into the **routing key** `v1.users.1337` and sent on the `resources.exchange` which routes the message to the service queue `B` for `B1` to process and respond.
 
@@ -130,7 +127,7 @@ Request Information:
 
 Call information:
 
-1. *scheme*: the scheme used for the call,, e.g. `http`
+1. *scheme*: the scheme used for the call, e.g. `http`
 2. *host*: the host called to make the call, e.g. `localhost`
 3. *port*: the port the call was made on, e.g. `8080`
 
@@ -156,12 +153,11 @@ For example a call to create a user will be:
 }
 ```
 
+Alchemy allows a service to send a `request`, which requires a response, and to send a `message`, which does not require a response.
 
-Sending requests to another service can either be done directly to a `service` by providing a the name of the service queue, or to a `resource` via the resource exchange that will use the `path` contained within the request to create the routing key.
+Sending requests to another service can either be done directly to a `service` by providing the name of the service queue, or to a `resource` via the resource exchange that will use the `path` contained within the request to create the routing key.
 
-Additionally, Alchemy allows a service to send a `request`, which requires a response, and to send a `message`, which does not require a response.
-
-These options create the four functions:
+This leads to four options driven through four functions:
 
 1. `send_message_to_service(service_name, message)`: send a message to a service and not require a response
 2. `send_message_to_resource(message)`: send a message to a resource and not require a response
@@ -202,18 +198,18 @@ The Router can be used either:
 2. as an [npm package](https://www.npmjs.com/package/alchemy-router) that can be extended and customised by writing [express](https://github.com/expressjs/express) middelware.
 3. as a Docker container `quay.io/loyalty_nz/alchemy-router`
 
-How the Router works is:
+The Router works as follows:
 
 1. An HTTP request is sent from a client to Alchemy
 2. The HTTP request is received by the Router and converted into an Alchemy request
 3. The request is sent to the correct Alchemy service or resource
 4. The response is unpacked and returned to the HTTP client
 
-In a typical Alchemy deployment there would be many instances of the Router running being load balanced across by an application like [Elastic Load Balancer](https://aws.amazon.com/elasticloadbalancing/) or [HAProxy](http://www.haproxy.org/). This can add performance and availability benefits.
+In a typical Alchemy deployment there would be many instances of the Router, load balanced by an application like [Elastic Load Balancer](https://aws.amazon.com/elasticloadbalancing/) or [HAProxy](http://www.haproxy.org/). This can add performance and availability benefits.
 
 ## Example Sinatra API Micro-Service Application
 
-The Ruby implementation of Alchemy, [Alchemy Flux](https://rubygems.org/gems/alchemy-flux), comes with a [Rack](https://github.com/rack/rack) server implementation that handles the life-cycle and processing requests of an Alchemy service. The Alchemy Rack server supports popular frameworks like [Rails](http://rubyonrails.org/) and [Sinatra](http://www.sinatrarb.com/) to make it very easy to build new, or move old, services onto Alchemy.
+The Ruby implementation of Alchemy, [Alchemy Flux](https://rubygems.org/gems/alchemy-flux), comes with a [Rack](https://github.com/rack/rack) server implementation that handles the life-cycle and processing requests of an Alchemy service. The Alchemy Rack server supports frameworks like [Rails](http://rubyonrails.org/), [Sinatra](http://www.sinatrarb.com/) and [Hoodoo](http://hoodoo.cloud/) to make it very easy to build new, or move old, services onto Alchemy.
 
 For example, a simple Sinatra application in the Alchemy framework has the files:
 
@@ -263,6 +259,6 @@ Alchemy Framework Implementations:
 
 ## Projects that use Alchemy
 
-1. [Hoodoo](https://rubygems.org/gems/hoodoo) A micro-services CRUD and RESTful framework
+1. [Hoodoo](http://hoodoo.cloud/) A micro-services CRUD and RESTful framework
 2. [Alchemy Resource](https://github.com/LoyaltyNZ/alchemy-resource) a Hoodoo interoperable ramework for Node.js
 3. [Router](https://github.com/LoyaltyNZ/alchemy-router) a router/gateway from HTTP calls to Alchemy services
