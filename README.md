@@ -90,7 +90,7 @@ The `service_fn` is the function that will process the received messages (that a
 
 For example:
 
-```
+```json
 {
   "body": "{\"created_at\":\"2016-02-27T04:31:58.200Z\"}",
   "http_status": "200",
@@ -137,7 +137,7 @@ Authentication information:
 
 For example a call to create a user will be:
 
-```
+```json
 {
   "body": "{\"name\":\"alice\",\"password\":\"1234\"}",
   "verb": "POST",
@@ -149,7 +149,7 @@ For example a call to create a user will be:
   "scheme": "https",
   "host": "localhost",
   "port": 8080,
-  "session": {'user_id': "2", 'session_id': "4321"}
+  "session": {"user_id": "2", "session_id": "4321"}
 }
 ```
 
@@ -213,7 +213,7 @@ The Ruby implementation of Alchemy, [Alchemy Flux](https://rubygems.org/gems/alc
 
 For example, a simple Sinatra application in the Alchemy framework has the files:
 
-```
+```ruby
 # ./Gemfile
 source 'https://rubygems.org'
 
@@ -221,7 +221,7 @@ gem 'sinatra'
 gem 'alchemy-flux'
 ```
 
-```
+```ruby
 # ./config.ru
 ENV['ALCHEMY_SERVICE_NAME'] = 'helloworld.service'
 ENV['ALCHEMY_RESOURCE_PATHS'] = '/v1/hello'
@@ -231,7 +231,7 @@ require './service'
 run Sinatra::Application
 ```
 
-```
+```ruby
 # ./service.rb
 require 'sinatra'
 
@@ -243,7 +243,7 @@ end
 
 To run this service we use `rackup` and specify `alchemy` as the Rack server:
 
-```
+```bash
 bundle install
 bundle exec rackup -s alchemy
 ```
